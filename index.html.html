@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalp</title>
+<style>
+:root{--bg:#02050c;--fg:#e8f8ff;--glow:#19b6ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+html,body{height:100%;margin:0;background:var(--bg);overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#t{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 7vh);text-align:center;color:var(--fg);font:600 clamp(20px,6vw,34px) system-ui,-apple-system,"Segoe UI",sans-serif;text-shadow:0 0 14px var(--glow);outline:none;padding:0 16px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="t">Yazılımcılar, seni seviyorum demez<br>onun yerine:</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H,D;
+function size(){D=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*D;H=cv.height=innerHeight*D}
+addEventListener('resize',size);size();
+
+const layers=[{s:1,n:46,a:.05},{s:.74,n:36,a:.045},{s:.5,n:26,a:.04}];
+const strands=[];
+layers.forEach(l=>{for(let i=0;i<l.n;i++)strands.push({s:l.s,a:l.a,p:Math.random()*6.28,q:Math.random()*6.28,f:.6+Math.random()*1.2,k:2+Math.random()*3})});
+
+function heart(t){return[16*Math.pow(Math.sin(t),3),-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))]}
+function g(x,c,w){return Math.exp(-((x-c)*(x-c))/(w*w))}
+function beat(t){const m=(t%1.3)/1.3;return g(m,.1,.05)+.7*g(m,.28,.06)}
+
+function frame(ms){
+  const t=ms/1000,b=beat(t);
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='rgba(2,5,12,.28)';
+  ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation='lighter';
+  const base=Math.min(W,H*.8)/38*(1+.10*b);
+  const cx=W/2,cy=H*.5;
+  ctx.lineWidth=D*.8;
+  for(const s of strands){
+    const alpha=.16+.22*b;
+    ctx.strokeStyle='rgba(25,'+(150+(b*70|0))+',255,'+alpha+')';
+    ctx.shadowColor='rgba(25,182,255,.9)';
+    ctx.shadowBlur=6*D;
+    ctx.beginPath();
+    for(let i=0;i<=72;i++){
+      const th=i/72*6.2832;
+      const [x,y]=heart(th);
+      const amp=s.a*(1+1.4*b)*s.k;
+      const nx=Math.sin(th*s.k+t*s.f+s.p)*amp*16;
+      const ny=Math.cos(th*s.k*1.1+t*s.f*.9+s.q)*amp*16;
+      const px=cx+(x*s.s+nx)*base,py=cy+(y*s.s+ny)*base;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
